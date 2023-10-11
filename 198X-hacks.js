@@ -1,5 +1,5 @@
 import Enumerator from './enumerator.js'
-import { MonoApiHelper } from 'frida-mono-api'
+import { MonoApiHelper } from 'frida-mono-kit'
 
 var globalState = {};   // used for Kill Screen
 
@@ -9,7 +9,7 @@ var cheatOutput = true; // using "console.log" seems to slow the game down
 // -- GAME START -------------------------------------------------------------------
 var mainMenu = Enumerator.enumerateClass('MainMenu');
 MonoApiHelper.Intercept(mainMenu.address, 'StartSelectedScene', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     // this.instance = args[0];
 
     globalState = {}; // reset global state between games
@@ -17,7 +17,7 @@ MonoApiHelper.Intercept(mainMenu.address, 'StartSelectedScene', {
     var sceneName = Enumerator.readString(args[1]);
 
     // replace names if we can
-    switch(sceneName) {
+    switch (sceneName) {
       case 'BeatEmUpSubwayInside':
         sceneName = 'Beating Heart';
         break;
@@ -51,7 +51,7 @@ MonoApiHelper.Intercept(mainMenu.address, 'StartSelectedScene', {
 // -- BEATING HEART, OUT OF THE VOID and SHADOWPLAY: invulnerability ---------------
 var takeDamage = Enumerator.enumerateClass('TakeDamage');
 MonoApiHelper.Intercept(takeDamage.address, 'Damage', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     this.instance = args[0];
 
     // check if the player is receiving damage, and if so then set "dead" flag
@@ -68,7 +68,7 @@ MonoApiHelper.Intercept(takeDamage.address, 'Damage', {
     }
   },
 
-  onLeave: function(retval) {
+  onLeave: function (retval) {
     if (this.resetDeadFlag) {
       takeDamage.setValue(this.instance, 'dead', false);
     }
@@ -79,7 +79,7 @@ MonoApiHelper.Intercept(takeDamage.address, 'Damage', {
 // -- THE RUNAWAY: no collisions or speed losses -----------------------------------
 var carController = Enumerator.enumerateClass('CarController');
 MonoApiHelper.Intercept(carController.address, 'SetSpeed', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     this.instance = args[0];
 
     // prevent going "off-road" from reducing speed
@@ -89,7 +89,7 @@ MonoApiHelper.Intercept(carController.address, 'SetSpeed', {
 });
 
 MonoApiHelper.Intercept(carController.address, 'OnCollision', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     this.instance = args[0];
 
     if (cheatOutput) {
@@ -118,7 +118,7 @@ var rpgController = Enumerator.enumerateClass('RPGController');
 var status = Enumerator.enumerateClass('Status'); // used to update on-screen RGP text (eg: health)
 
 MonoApiHelper.Intercept(rpgController.address, 'EnemyAttack', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     this.instance = args[0];
     var damage = parseInt(args[1]);
 
@@ -126,7 +126,7 @@ MonoApiHelper.Intercept(rpgController.address, 'EnemyAttack', {
     // (we can't change the incoming damage value to 0 unfortunately)
     var health = rpgController.getValue(this.instance, 'health');
     if (cheatOutput) {
-      console.log('[+] Player took RPG damage: '+ damage + ', health (before damage) was: ' + health);
+      console.log('[+] Player took RPG damage: ' + damage + ', health (before damage) was: ' + health);
     }
 
     // we could set the health back in the "onLeave" for "EnemyAttack", but then the health displayed in-game looks like we took damage
@@ -138,7 +138,7 @@ MonoApiHelper.Intercept(rpgController.address, 'EnemyAttack', {
 });
 
 MonoApiHelper.Intercept(status.address, 'UpdateStatusText', {
-  onEnter: function(args) {
+  onEnter: function (args) {
     // make sure we want to update health (NOT during game start or level up)
     if (globalState.contollerAddress && globalState.updateHealth) {
       if (cheatOutput) {

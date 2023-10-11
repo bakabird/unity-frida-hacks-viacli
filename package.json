@@ -1,15 +1,18 @@
 {
-  "name": "unity-frida-hacks",
+  "name": "unity-frida-hacks-viacli",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "rollupETest": "rollup --config rollup.etest.config.js --bundleConfigAsCjs",
+    "rollupHack": "rollup --config rollup.hack.config.js --bundleConfigAsCjs"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "frida-inject": "^0.3.0",
-    "frida-mono-api": "0.0.5"
+    "frida-mono-kit": "^0.0.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.2"
   }
 }
